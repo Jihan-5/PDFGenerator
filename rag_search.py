@@ -1,5 +1,4 @@
 import os
-import faiss
 import pickle
 import argparse
 import logging
@@ -7,9 +6,10 @@ import warnings
 import re
 from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
+from pinecone import Pinecone
 
-# Load environment variables
-load_dotenv()
+# Optionally load from .env (uncomment if using a .env file)
+# load_dotenv()
 
 # Suppress transformers warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
@@ -32,8 +32,17 @@ model = SentenceTransformer(
     device="cpu",
     token=hf_token
 )
-logger.info("Model loaded. Loading FAISS index...")
-index = faiss.read_index("rag.index")
+logger.info("Model loaded. Initializing Pinecone...")
+
+# --- NEW Pinecone SDK section ---
+api_key = os.environ.get("PINECONE_API_KEY")
+if not api_key:
+    raise ValueError("PINECONE_API_KEY not set in environment! Set it in your terminal or .env file.")
+pc = Pinecone(api_key="pcsk_42A368_TQFCoBDdBpwZJbAKMty3zQxGCDkyrTkFVq1FHurHyt7cG3DVpygKRjmm9roQDJ")
+index_name = "rag-index"
+index = pc.Index(index_name)
+
+# Load meta file (assume same directory and format)
 with open("rag.meta", "rb") as f:
     meta = pickle.load(f)
 
@@ -42,11 +51,22 @@ table_names = {m["name"].lower(): m["name"] for m in meta if m["type"] == "table
 
 def top_k(query: str, k: int = 5, type_filter: str = None):
     q_vec = model.encode([query], batch_size=1, normalize_embeddings=True, show_progress_bar=False)
-    logger.debug(f"Query vector shape: {q_vec.shape}")
-    distances, indices = index.search(q_vec, k)
-    hits = [{"doc": meta[idx], "score": float(dist)} for dist, idx in zip(distances[0], indices[0]) if idx != -1]
-    if type_filter:
-        hits = [h for h in hits if h["doc"]["type"] == type_filter][:k]
+    # Pinecone returns ('matches', 'namespace')
+    results = index.query(
+        vector=q_vec[0].tolist(),
+        top_k=k,
+        include_metadata=True
+    )
+    hits = []
+    for match in results['matches']:
+        doc_meta = match['metadata']
+        score = match['score']
+        # If you want to filter by type, do so:
+        if type_filter and doc_meta.get("type") != type_filter:
+            continue
+        hits.append({"doc": doc_meta, "score": float(score)})
+        if len(hits) >= k:
+            break
     return hits
 
 def truncate_to_lines(text: str, max_lines: int) -> str:
@@ -105,6 +125,7 @@ def search(query: str, k: int = 5, type_filter: str = None):
             if info.get("fields"):
                 print("  Fields:", ", ".join(info["fields"][:6]), "…")
         else:  # field
+
             print("  Field:", info["field_name"])
             print("  Type:", info.get("field_type", "Unknown"))
             print("  Definition:", info.get("description", "No description available"))

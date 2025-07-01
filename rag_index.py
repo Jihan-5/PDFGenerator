@@ -1,9 +1,13 @@
 import os
 import pickle
 import numpy as np
-import faiss
 import logging
 from sentence_transformers import SentenceTransformer
+from uuid import uuid4
+
+# Optionally load from .env if you want (uncomment below if using a .env file)
+# from dotenv import load_dotenv
+# load_dotenv()
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -16,6 +20,28 @@ logger.info("Loading Nomic model...")
 model = SentenceTransformer("nomic-ai/nomic-embed-text-v1.5", trust_remote_code=True, device="cpu")
 logger.info("Nomic model loaded")
 
+# --- Pinecone Secure Setup ---
+from pinecone import Pinecone, ServerlessSpec
+
+api_key = os.environ.get("PINECONE_API_KEY")
+if not api_key:
+    raise ValueError("PINECONE_API_KEY not set in environment! Set it in your terminal or .env file.")
+
+logger.info("Initializing Pinecone...")
+pc = Pinecone(api_key="pcsk_42A368_TQFCoBDdBpwZJbAKMty3zQxGCDkyrTkFVq1FHurHyt7cG3DVpygKRjmm9roQDJ")
+
+index_name = "rag-index"
+if index_name not in pc.list_indexes().names():
+    pc.create_index(
+        name=index_name,
+        dimension=768,  # for nomic-ai/nomic-embed-text-v1.5
+        metric='cosine',
+        spec=ServerlessSpec(cloud='aws', region='us-east-1')
+    )
+
+index = pc.Index(index_name)
+logger.info("Pinecone initialized")
+
 def embed_batch(texts: list[str], batch_size: int = 32) -> list[list[float]]:
     try:
         logger.info(f"Embedding {len(texts)} texts in batches...")
@@ -25,9 +51,14 @@ def embed_batch(texts: list[str], batch_size: int = 32) -> list[list[float]]:
         logger.error(f"Error embedding texts: {e}")
         raise
 
-def build_index(sections: list[dict], idx="rag.index", meta="rag.meta"):
+def batch_upsert(index, vectors, batch_size=200):  # <<-- BATCH SIZE SET TO 20
+    for i in range(0, len(vectors), batch_size):
+        batch = vectors[i:i+batch_size]
+        index.upsert(vectors=batch)
+
+def build_index(sections: list[dict], meta="rag.meta"):
     logger.info(f"Processing {len(sections)} sections")
-    docs, meta_out = [], []
+    docs, meta_out, vectors = [], [], []
 
     for s in sections:
         purpose_lines = s.get("purpose", [])
@@ -70,19 +101,24 @@ def build_index(sections: list[dict], idx="rag.index", meta="rag.meta"):
     logger.info(f"Generated {len(vecs)} embeddings with dimension {len(vecs[0])}")
 
     try:
-        vecs_arr = np.array(vecs, dtype="float32")
-        index = faiss.IndexFlatIP(vecs_arr.shape[1])
-        faiss.normalize_L2(vecs_arr)
-        index.add(vecs_arr)
-        faiss.write_index(index, idx)
+        # Prepare vectors for Pinecone upsert
+        vectors = [
+            {
+                "id": str(uuid4()),
+                "values": vec,
+                "metadata": meta_item
+            }
+            for vec, meta_item in zip(vecs, meta_out)
+        ]
+        batch_upsert(index, vectors, batch_size=200)   # <<-- USE BATCHING!
     except Exception as e:
-        logger.error(f"Error creating FAISS index: {e}")
+        logger.error(f"Error upserting to Pinecone: {e}")
         raise
 
     with open(meta, "wb") as f:
         pickle.dump(meta_out, f)
 
-    logger.info(f"✅ Indexed {len(meta_out)} items (tables: {len(sections)}, fields: {len(meta_out) - len(sections)}) → {idx}, {meta}")
+    logger.info(f"✅ Indexed {len(meta_out)} items (tables: {len(sections)}, fields: {len(meta_out) - len(sections)}) → Pinecone index: {index_name}, {meta}")
 
 if __name__ == "__main__":
     import argparse
