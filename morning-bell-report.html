@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Nifty Morning Bell Report</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ===== GLOBAL STYLES ===== */
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .page {
+      width: 210mm;
+      height: 297mm;
+      padding: 20mm 15mm;
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
+    }
+    h1, h2, h3 {
+      margin: 0;
+    }
+    .title-bar {
+      width: 100%;
+      height: 60mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      color: #fff;
+      background: linear-gradient(135deg, #004b8d 60%, #0b75c6 100%);
+      padding: 10mm 15mm;
+    }
+    .title-bar .logo-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .title-bar .logo {
+      height: 8mm;
+      background: #ccc;
+      width: 30mm;
+      margin-right: 5mm;
+    }
+    .title-bar h1 {
+      font-size: 24pt;
+      font-weight: 700;
+    }
+    .title-bar p.date {
+      font-size: 11pt;
+      margin-top: 1mm;
+    }
+    .search-bar {
+      display: flex;
+      align-items: center;
+      margin-top: 4mm;
+    }
+    .search-bar input {
+      flex: 1;
+      padding: 2mm 4mm;
+      border: none;
+      border-radius: 3mm;
+      background: #fff;
+      font-size: 10pt;
+    }
+    .search-bar .icons {
+      display: flex;
+      gap: 2mm;
+      margin-left: 4mm;
+    }
+    .search-bar .icon {
+      width: 6mm;
+      height: 6mm;
+      background: #fff;
+      border-radius: 50%;
+    }
+    .section-header {
+      background: #004b8d;
+      color: #fff;
+      padding: 3mm;
+      font-size: 12pt;
+      font-weight: 600;
+      margin-top: 2mm;
+    }
+    .text-block {
+      font-size: 9pt;
+      line-height: 1.4;
+      margin-bottom: 3mm;
+    }
+    .text-block ul {
+      margin: 0;
+      padding-left: 4mm;
+    }
+    .text-block li {
+      margin-bottom: 1.8mm;
+    }
+    .table-container {
+      margin-top: 2mm;
+      margin-bottom: 2mm;
+    }
+    .styled-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+    }
+    .styled-table th {
+      background: #f6a821;
+      color: #fff;
+      padding: 2mm 2mm;
+      text-align: center;
+      font-weight: 500;
+      border: 0.5px solid #ddd;
+    }
+    .styled-table td {
+      background: #f7f9fb;
+      padding: 2mm 2mm;
+      text-align: center;
+      border: 0.5px solid #ddd;
+    }
+    /* Commentary bullet */
+    .bullet-list {
+      list-style: none;
+      padding-left: 3mm;
+    }
+    .bullet-list li {
+      position: relative;
+      margin-bottom: 1.5mm;
+      padding-left: 3mm;
+    }
+    .bullet-list li:before {
+      content: "\25AA";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: #004b8d;
+      font-size: 7pt;
+    }
+    /* Chart containers */
+    .chart-wrapper {
+      width: 100%;
+      margin-top: 2mm;
+      text-align: center;
+    }
+    /* Footer */
+    .footer {
+      position: absolute;
+      bottom: 10mm;
+      left: 15mm;
+      right: 15mm;
+      font-size: 6.5pt;
+      color: #666;
+    }
+    .footer p {
+      margin: 1mm 0;
+    }
+    /* Loading indicator */
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 20px;
+      border-radius: 5px;
+      z-index: 9999;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loading">Generating PDF... Please wait.</div>
+  
+  <div id="report">
+    <!-- Page 1: Cover -->
+    <section class="page" id="page-cover">
+      <div class="title-bar">
+        <div class="logo-row">
+          <div class="logo"></div>
+          <div class="logo"></div>
+        </div>
+        <h1>Morning Bell</h1>
+        <p class="date" id="report-date">Date: 31st July 2025</p>
+        <div class="search-bar">
+          <input type="text" placeholder="bajajbroking.in">
+          <div class="icons">
+            <div class="icon"></div>
+            <div class="icon"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 2: Market Outlook -->
+    <section class="page" id="page-market">
+      <div class="section-header">Market Outlook</div>
+      <div class="text-block">
+        <h3 style="color:#004b8d;font-size:10pt;">Market Commentary</h3>
+        <ul class="bullet-list" id="market-commentary"></ul>
+      </div>
+      <div class="table-container">
+        <table class="styled-table" id="indian-markets-table"></table>
+      </div>
+      <div class="table-container">
+        <table class="styled-table" id="global-markets-table"></table>
+      </div>
+      <div class="table-container">
+        <table class="styled-table" id="commodity-table"></table>
+      </div>
+      <div class="text-block">
+        <h3 style="color:#004b8d;font-size:10pt;">Global Updates</h3>
+        <ul class="bullet-list" id="global-updates"></ul>
+      </div>
+      <div class="text-block">
+        <h3 style="color:#004b8d;font-size:10pt;">Key Events</h3>
+        <ul class="bullet-list" id="key-events"></ul>
+      </div>
+      <div class="text-block">
+        <h3 style="color:#004b8d;font-size:10pt;">Fund Flow Activity</h3>
+        <table class="styled-table" id="fund-flow-table"></table>
+      </div>
+      <div class="footer">
+        <p>Source: Bloomberg, NSE, NSDL, BSE, Bajaj Broking Research</p>
+      </div>
+    </section>
+
+    <!-- Page 3: Technical Outlook -->
+    <section class="page" id="page-technical">
+      <div class="section-header">Technical Outlook Nifty</div>
+      <div class="chart-wrapper">
+        <canvas id="nifty-chart" height="140"></canvas>
+      </div>
+      <div class="text-block">
+        <p id="technical-commentary" style="font-size:8.5pt; line-height:1.4;"></p>
+      </div>
+      <div class="chart-wrapper">
+        <h3 style="color:#004b8d;font-size:10pt;">Trend in index long/short futures</h3>
+        <canvas id="futures-chart" height="120"></canvas>
+      </div>
+      <div class="chart-wrapper">
+        <div style="display:flex;justify-content: space-between;">
+          <div style="width:48%;">
+            <h3 style="color:#004b8d;font-size:9pt;">Indian ADR % Change</h3>
+            <canvas id="adr-chart" height="120"></canvas>
+          </div>
+          <div style="width:48%;">
+            <h3 style="color:#004b8d;font-size:9pt;">Sector Indices % Change</h3>
+            <canvas id="sector-change-chart" height="120"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="footer">
+        <p>Source: Bloomberg, NSE, NSDL, BSE, Bajaj Broking Research</p>
+      </div>
+    </section>
+
+    <!-- Page 4: Option Chain Analysis -->
+    <section class="page" id="page-option-chain">
+      <div class="section-header">Option Chain Analysis</div>
+      <div class="chart-wrapper">
+        <h3 style="color:#004b8d;font-size:9pt;">Nifty Option Chain</h3>
+        <canvas id="nifty-option-chart" height="160"></canvas>
+      </div>
+      <div class="text-block">
+        <ul class="bullet-list" id="nifty-option-commentary"></ul>
+      </div>
+      <div class="chart-wrapper">
+        <h3 style="color:#004b8d;font-size:9pt;">Bank Nifty Option Chain</h3>
+        <canvas id="banknifty-option-chart" height="160"></canvas>
+      </div>
+      <div class="text-block">
+        <ul class="bullet-list" id="banknifty-option-commentary"></ul>
+      </div>
+      <div class="footer">
+        <p>Source: Bloomberg, NSE, NSDL, BSE, Bajaj Broking Research</p>
+      </div>
+    </section>
+
+    <!-- Page 5: Derivatives Analysis -->
+    <section class="page" id="page-derivatives">
+      <div class="section-header">Derivatives Analysis</div>
+      <div class="table-container">
+        <table class="styled-table" id="index-highlights-table"></table>
+      </div>
+      <div style="display:flex;justify-content: space-between; gap:3mm;">
+        <table class="styled-table" style="width:48%;" id="price-gainers-table"></table>
+        <table class="styled-table" style="width:48%;" id="oi-gainers-table"></table>
+      </div>
+      <div style="display:flex;justify-content: space-between; gap:3mm; margin-top:2mm;">
+        <table class="styled-table" style="width:48%;" id="price-losers-table"></table>
+        <table class="styled-table" style="width:48%;" id="oi-losers-table"></table>
+      </div>
+      <div style="display:flex;justify-content: space-between; gap:3mm; margin-top:2mm;">
+        <div style="width:32%; text-align:center;">
+          <h4 style="color:#004b8d;font-size:9pt;">L/S Ratio</h4>
+          <canvas id="ls-chart" height="100"></canvas>
+        </div>
+        <div style="width:32%; text-align:center;">
+          <h4 style="color:#004b8d;font-size:9pt;">Future Index Long</h4>
+          <canvas id="long-chart" height="100"></canvas>
+        </div>
+        <div style="width:32%; text-align:center;">
+          <h4 style="color:#004b8d;font-size:9pt;">Future Index Short</h4>
+          <canvas id="short-chart" height="100"></canvas>
+        </div>
+      </div>
+      <div class="footer">
+        <p>Source: Bloomberg, NSE, NSDL, BSE, Bajaj Broking Research</p>
+      </div>
+    </section>
+
+    <!-- Page 6: Key News -->
+    <section class="page" id="page-news">
+      <div class="section-header">Key News</div>
+      <div class="table-container">
+        <table class="styled-table" id="news-table"></table>
+      </div>
+      <div class="footer">
+        <p>Source: Bloomberg, NSE, NSDL, BSE, Bajaj Broking Research</p>
+      </div>
+    </section>
+
+    <!-- Page 7: Event Calendar & Support/Resistance -->
+    <section class="page" id="page-calendar">
+      <div class="section-header">Key Event Calendar</div>
+      <div class="table-container">
+        <table class="styled-table" id="event-calendar-table"></table>
+      </div>
+      <div class="section-header" style="margin-top:4mm;">Nifty 50 Stocks – Support & Resistance</div>
+      <div class="table-container">
+        <table class="styled-table" id="support-resistance-table"></table>
+      </div>
+      <div class="footer">
+        <p>Source: Bloomberg, NSE, NSDL, BSE, Bajaj Broking Research</p>
+      </div>
+    </section>
+
+    <!-- Page 8: Disclaimer -->
+    <section class="page" id="page-disclaimer">
+      <div class="section-header">Disclaimer</div>
+      <div class="text-block" id="disclaimer-text" style="font-size:7pt;line-height:1.3;"></div>
+      <div class="footer">
+        <p style="font-size:7pt;">For more query reach out to: Bajaj Broking Research Team | Email: researchdesk@bajajbroking.in</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- Download Button -->
+  <button id="download-pdf" style="position: fixed; top: 10px; left: 10px; padding: 10px 20px; font-size: 16px; cursor: pointer; background: #004b8d; color: white; border: none; border-radius: 5px;">Download PDF</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    // Check if libraries are loaded
+    console.log('Chart.js loaded:', typeof Chart !== 'undefined');
+    console.log('html2canvas loaded:', typeof html2canvas !== 'undefined');
+    console.log('jsPDF loaded:', typeof window.jspdf !== 'undefined');
+
+    const { jsPDF } = window.jspdf;
+
+    /* ===== Example JSON DATA ===== */
+    const reportData = {
+      date: '31st July 2025',
+      marketCommentary: [
+        'Indian equities extended their losing streak for the fourth straight session on July 14th, breaching the 25,100 mark.',
+        'Sensex was down 247 points or 0.30% at 82,253.46; Nifty down 67 points or 0.27% at 25,082.30.',
+        'Nifty IT index underperformed, declining 1%; pharma, consumer durables, media, realty & PSU banks saw gains.',
+        'Broader markets outperformed: Nifty Midcap gained 0.7%, Small-cap index rose over 1%.',
+        'India VIX edged higher by 1.5%, indicating a slight uptick in volatility.'
+      ],
+      indianMarkets: [
+        { index: 'NIFTY', closing: '25082.3', daily: '-0.27', ytd: '6.08' },
+        { index: 'BANKNIFTY', closing: '56765.35', daily: '0.02', ytd: '11.61' },
+        { index: 'SENSEX', closing: '82253.46', daily: '-0.30', ytd: '5.27' },
+        { index: 'USDINR', closing: '85.9925', daily: '-0.22', ytd: '3.39' },
+        { index: 'INDIA VIX', closing: '11.98', daily: '1.38', ytd: '-17.08' },
+        { index: 'GIFT NIFTY', closing: '25168', daily: '-0.02', ytd: '5.88' }
+      ],
+      globalMarkets: [
+        { index: 'DOW', closing: '44459.65', daily: '0.20', ytd: '4.50' },
+        { index: 'S&P500', closing: '6268.56', daily: '0.14', ytd: '6.58' },
+        { index: 'NASDAQ', closing: '20640.33', daily: '0.27', ytd: '6.88' },
+        { index: 'NIKKEI', closing: '39563.55', daily: '0.26', ytd: '-0.83' },
+        { index: 'HANGSENG', closing: '24500.58', daily: '1.23', ytd: '22.14' }
+      ],
+      commodities: [
+        { commodity: 'GOLD ($)', current: '3357.9', daily: '-0.04', ytd: '26.80' },
+        { commodity: 'BR CRUDE ($)', current: '69.02', daily: '-0.27', ytd: '-7.84' },
+        { commodity: 'COPPER ($)', current: '5.486', daily: '-0.53', ytd: '36.60' },
+        { commodity: 'US 10YR (%)', current: '4.4353', daily: '0.05', ytd: '-2.50' }
+      ],
+      globalUpdates: [
+        'The S&P 500 and Nasdaq Composite fell on Friday from highs as investors watched updates on tariffs and awaited bank results.',
+        'President Donald Trump said Monday the US will impose "very severe tariffs" on Russia absent a deal in 50 days.',
+        'Asia-Pacific markets were mixed on Tuesday as investors shrugged off uncertainty surrounding US tariffs and looked ahead to economic data from China.'
+      ],
+      keyEvents: [
+        'US CPI Data for June on 15-07-2025',
+        'FOMC Rate Decision on 31-07-2025',
+        'HSBC India PMI Mfg on 01-07-2025'
+      ],
+      fundFlow: [
+        { participant: 'FII', cash: '-5104', mtd: '-10553.19', ytd: '-132698.69' },
+        { participant: 'DII', cash: '3559', mtd: '12672.06', ytd: '370047.87' }
+      ],
+      technicalCommentary: 'The index formed a bearish candle with a long lower shadow, marking the fourth straight session of decline with lower highs and lower lows. Buyers are stepping in near the key 25,000 level. A pullback remains shallow and healthy.',
+      niftyPrices: { labels: ['Jun 1', 'Jun 5', 'Jun 10', 'Jun 15', 'Jun 20', 'Jun 25', 'Jul 1', 'Jul 5', 'Jul 10', 'Jul 15'], data: [24500, 24800, 25000, 25250, 25500, 25400, 25300, 25050, 24950, 25082] },
+      futuresData: {
+        labels: ['Jun 1', 'Jun 5', 'Jun 10', 'Jun 15', 'Jun 20', 'Jun 25', 'Jul 1', 'Jul 5', 'Jul 10', 'Jul 15'],
+        client: [50000, 48000, 47000, 46000, 45000, 44000, 43000, 42000, 41000, 40000],
+        fii: [-10000, -15000, -20000, -25000, -22000, -20000, -18000, -16000, -14000, -12000],
+        pro: [30000, 32000, 34000, 36000, 38000, 40000, 42000, 44000, 46000, 48000],
+        dii: [20000, 21000, 21500, 22000, 22500, 23000, 23500, 24000, 24500, 25000]
+      },
+      adrChanges: [
+        { name: 'Dr. Reddy Lab.', change: -1.00 },
+        { name: 'HDFC Bank', change: -0.89 },
+        { name: 'ICICI Bank', change: -0.74 },
+        { name: 'Wipro', change: -0.34 },
+        { name: 'Infosys', change: -0.10 }
+      ],
+      sectorChanges: [
+        { name: 'Nifty Realty', change: 1.30 },
+        { name: 'Nifty Healthcare PR', change: 1.26 },
+        { name: 'Nifty Pharma', change: 1.06 },
+        { name: 'Nifty PSU Bank', change: 0.83 },
+        { name: 'Nifty IT', change: -1.11 }
+      ],
+      niftyOptionData: {
+        labels: ['24500', '24600', '24700', '24800', '24900', '25000', '25100', '25200', '25300', '25400'],
+        calls: [3000, 4000, 5000, 7000, 9500, 12000, 11000, 9000, 6000, 3000],
+        puts: [2500, 3500, 4500, 6500, 8500, 10000, 10500, 8000, 5000, 2000]
+      },
+      niftyOptionCommentary: [
+        'Nifty remains under pressure as bears dominate both price action and derivatives data.',
+        'Highest call open interest (OI) is at 25,500, followed by 26,000, indicating strong resistance zones ahead.',
+        'The highest put OI is placed at 25,000, offering support.'
+      ],
+      bankNiftyOptionData: {
+        labels: ['56000', '56200', '56400', '56600', '56800', '57000', '57200', '57400', '57600', '57800'],
+        calls: [2000, 3000, 4500, 5000, 6000, 7000, 8000, 6500, 5000, 3000],
+        puts: [2200, 3200, 4300, 4800, 5400, 6200, 6800, 5500, 4000, 2500]
+      },
+      bankNiftyOptionCommentary: [
+        'Bank Nifty is facing selling pressure; highest call and put OI positioned at 56,000/55,000 respectively.',
+        'Significant call writing observed at 25,100–25,800 level.',
+        'Break below 25,600 could open the door to 56,000; upside resistance at 57,500.'
+      ],
+      indexHighlights: [
+        { index: 'Nifty', cmp: '25,617.50', priceChange: '-55.90', pricePct: '-0.22%', vwap: '25,139', basis: '85.20', volume: '29,413', cumOi: '72,785', oiPct: '4.12%', atmIv: '17.80%', pcr: '0.72' },
+        { index: 'Bank Nifty', cmp: '57,002.60', priceChange: '-56.90', pricePct: '-0.10%', vwap: '56,216', basis: '237.25', volume: '19,413', cumOi: '49,035', oiPct: '2.06%', atmIv: '13.11%', pcr: '0.72' }
+      ],
+      priceGainers: [
+        { sn: 1, symbol: 'IDEA', pricePct: '0.89%', oiPct: '0%', longShort: 'Long_Buildup' },
+        { sn: 2, symbol: 'PEL', pricePct: '0.63%', oiPct: '-0.52%', longShort: 'Short_Covering' }
+      ],
+      oiGainers: [
+        { sn: 1, symbol: 'PPLPHARMA', pricePct: '3.56%', oiPct: '32.17%', longShort: 'Long_Buildup' },
+        { sn: 2, symbol: 'MANKIND', pricePct: '3.26%', oiPct: '11.96%', longShort: 'Long_Buildup' }
+      ],
+      priceLosers: [
+        { sn: 1, symbol: 'SBICARD', pricePct: '-2.39%', oiPct: '8.30%', longShort: 'Short_Buildup' },
+        { sn: 2, symbol: 'JIOFIN', pricePct: '-1.95%', oiPct: '5.23%', longShort: 'Short_Buildup' }
+      ],
+      oiLosers: [
+        { sn: 1, symbol: 'GLENMARK', pricePct: '1.82%', oiPct: '-8.67%', longShort: 'Short_Covering' },
+        { sn: 2, symbol: 'MGL', pricePct: '0.25%', oiPct: '-5.52%', longShort: 'Long_Unwinding' }
+      ],
+      lsRatio: { labels: ['Client', 'DII', 'FII', 'Pro'], data: [1.73, 1.99, 0.22, 1.16] },
+      futureLong: { labels: ['Client', 'DII', 'FII', 'Pro'], data: [56, 12, 22, 10] },
+      futureShort: { labels: ['Client', 'DII', 'FII', 'Pro'], data: [33, 46, 11, 10] },
+      news: [
+        { company: 'RVNL', news: 'Secures Rs 447 cr contract from Delhi Metro Phase-IV.', impact: 'positive' },
+        { company: 'SUN PHARMA', news: 'Launch of LEQSELVI™ in the US.', impact: 'positive' },
+        { company: 'ASTRAZENECA', news: 'Receives permission to import Durvalumab for use in India.', impact: 'neutral' }
+      ],
+      events: [
+        { date: 'Tuesday, July 1, 2025', country: 'India', event: 'HSBC India PMI Mfg' },
+        { date: 'Thursday, July 10, 2025', country: 'United States', event: 'Initial Jobless Claims' }
+      ],
+      supportResistance: [
+        { stock: 'ADANIENT', s2: '2515.23', s1: '2548.27', close: '2581.30', r1: '2609.57', r2: '2637.83' },
+        { stock: 'ADANIPORTS', s2: '714.00', s1: '726.50', close: '733.00', r1: '744.30', r2: '755.00' }
+      ],
+      disclaimer: 'Investments in the securities market are subject to market risk. Read all related documents carefully before investing. This report is prepared based on publicly available information and does not constitute a recommendation. Past performance is not indicative of future returns. The research analyst or his associates may have financial interest in the subject company.'
+    };
+
+    /* ===== Populate Tables ===== */
+    function populateTables() {
+      console.log('Populating tables...');
+      document.getElementById('report-date').textContent = 'Date: ' + reportData.date;
+      
+      const mc = document.getElementById('market-commentary');
+      reportData.marketCommentary.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        mc.appendChild(li);
+      });
+
+      function buildTable(id, headers, rows) {
+        const table = document.getElementById(id);
+        if (!table) {
+          console.error(`Table with id ${id} not found`);
+          return;
+        }
+        let thead = '<tr>';
+        headers.forEach(h => { thead += `<th>${h}</th>`; });
+        thead += '</tr>';
+        let tbody = '';
+        rows.forEach(row => {
+          tbody += '<tr>';
+          headers.forEach(h => {
+            const key = h.toLowerCase().replace(/[\s/]+/g, '');
+            tbody += `<td>${row[key] || ''}</td>`;
+          });
+          tbody += '</tr>';
+        });
+        table.innerHTML = thead + tbody;
+      }
+
+      buildTable('indian-markets-table', ['Index', 'Closing', '% Daily Chg', '% YTD Chg'], reportData.indianMarkets.map(r => ({
+        index: r.index, closing: r.closing, '%dailychg': r.daily, '%ytdchg': r.ytd
+      })));
+      buildTable('global-markets-table', ['Index', 'Closing', '% Daily Chg', '% YTD Chg'], reportData.globalMarkets.map(r => ({
+        index: r.index, closing: r.closing, '%dailychg': r.daily, '%ytdchg': r.ytd
+      })));
+      buildTable('commodity-table', ['Commodity/Gsec', 'Current', '% Daily Chg', '% YTD Chg'], reportData.commodities.map(r => ({
+        'commoditygsec': r.commodity, current: r.current, '%dailychg': r.daily, '%ytdchg': r.ytd
+      })));
+      buildTable('fund-flow-table', ['Participant', 'Cash', 'MTD', 'YTD'], reportData.fundFlow.map(r => ({
+        participant: r.participant, cash: r.cash, mtd: r.mtd, ytd: r.ytd
+      })));
+
+      const gu = document.getElementById('global-updates');
+      reportData.globalUpdates.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        gu.appendChild(li);
+      });
+
+      const ke = document.getElementById('key-events');
+      reportData.keyEvents.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        ke.appendChild(li);
+      });
+
+      document.getElementById('technical-commentary').textContent = reportData.technicalCommentary;
+
+      const noc = document.getElementById('nifty-option-commentary');
+      reportData.niftyOptionCommentary.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        noc.appendChild(li);
+      });
+
+      const bnoc = document.getElementById('banknifty-option-commentary');
+      reportData.bankNiftyOptionCommentary.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        bnoc.appendChild(li);
+      });
+
+      buildTable('index-highlights-table', ['Index', 'CMP', 'Price Change', 'Price %', 'VWAP', 'Basis', 'Volume', 'Cum OI', 'OI %', 'ATM IV', 'PCR'], reportData.indexHighlights.map(r => ({
+        index: r.index, cmp: r.cmp, pricechange: r.priceChange, 'price%': r.pricePct, vwap: r.vwap, basis: r.basis, volume: r.volume, cumoi: r.cumOi, 'oi%': r.oiPct, atmiv: r.atmIv, pcr: r.pcr
+      })));
+
+      buildTable('price-gainers-table', ['SN', 'Symbol', 'Price %', 'OI %', 'Long/Short'], reportData.priceGainers.map(r => ({
+        sn: r.sn, symbol: r.symbol, 'price%': r.pricePct, 'oi%': r.oiPct, longshort: r.longShort
+      })));
+
+      buildTable('oi-gainers-table', ['SN', 'Symbol', 'Price %', 'OI %', 'Long/Short'], reportData.oiGainers.map(r => ({
+        sn: r.sn, symbol: r.symbol, 'price%': r.pricePct, 'oi%': r.oiPct, longshort: r.longShort
+      })));
+
+      buildTable('price-losers-table', ['SN', 'Symbol', 'Price %', 'OI %', 'Long/Short'], reportData.priceLosers.map(r => ({
+        sn: r.sn, symbol: r.symbol, 'price%': r.pricePct, 'oi%': r.oiPct, longshort: r.longShort
+      })));
+
+      buildTable('oi-losers-table', ['SN', 'Symbol', 'Price %', 'OI %', 'Long/Short'], reportData.oiLosers.map(r => ({
+        sn: r.sn, symbol: r.symbol, 'price%': r.pricePct, 'oi%': r.oiPct, longshort: r.longShort
+      })));
+
+      buildTable('news-table', ['Company', 'News', 'Impact'], reportData.news.map(r => ({
+        company: r.company, news: r.news, impact: r.impact
+      })));
+
+      buildTable('event-calendar-table', ['Date', 'Country', 'Event'], reportData.events.map(r => ({
+        date: r.date, country: r.country, event: r.event
+      })));
+
+      buildTable('support-resistance-table', ['Stock', 'S2', 'S1', 'Close', 'R1', 'R2'], reportData.supportResistance.map(r => ({
+        stock: r.stock, s2: r.s2, s1: r.s1, close: r.close, r1: r.r1, r2: r.r2
+      })));
+
+      document.getElementById('disclaimer-text').textContent = reportData.disclaimer;
+      console.log('Tables populated successfully');
+    }
+
+    /* ===== Populate Charts ===== */
+    function populateCharts() {
+      console.log('Creating charts...');
+      
+      try {
+        new Chart(document.getElementById('nifty-chart'), {
+          type: 'line',
+          data: {
+            labels: reportData.niftyPrices.labels,
+            datasets: [{
+              label: 'Nifty Index',
+              data: reportData.niftyPrices.data,
+              borderColor: '#004b8d',
+              fill: false
+            }]
+          },
+          options: { 
+            responsive: true,
+            plugins: { legend: { display: false } }, 
+            scales: { y: { beginAtZero: false } } 
+          }
+        });
+
+        new Chart(document.getElementById('futures-chart'), {
+          type: 'line',
+          data: {
+            labels: reportData.futuresData.labels,
+            datasets: [
+              { label: 'Client', data: reportData.futuresData.client, borderColor: '#004b8d', fill: false },
+              { label: 'FII', data: reportData.futuresData.fii, borderColor: '#f6a821', fill: false },
+              { label: 'Pro', data: reportData.futuresData.pro, borderColor: '#0b75c6', fill: false },
+              { label: 'DII', data: reportData.futuresData.dii, borderColor: '#666', fill: false }
+            ]
+          },
+          options: { 
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }, 
+            scales: { y: { beginAtZero: false } } 
+          }
+        });
+
+        new Chart(document.getElementById('adr-chart'), {
+          type: 'bar',
+          data: {
+            labels: reportData.adrChanges.map(r => r.name),
+            datasets: [{
+              label: '% Change',
+              data: reportData.adrChanges.map(r => r.change),
+              backgroundColor: reportData.adrChanges.map(r => r.change >= 0 ? '#004b8d' : '#f6a821')
+            }]
+          },
+          options: { 
+            responsive: true,
+            plugins: { legend: { display: false } }, 
+            scales: { y: { beginAtZero: true } } 
+          }
+        });
+
+        new Chart(document.getElementById('sector-change-chart'), {
+          type: 'bar',
+          data: {
+            labels: reportData.sectorChanges.map(r => r.name),
+            datasets: [{
+              label: '% Change',
+              data: reportData.sectorChanges.map(r => r.change),
+              backgroundColor: reportData.sectorChanges.map(r => r.change >= 0 ? '#004b8d' : '#f6a821')
+            }]
+          },
+          options: { 
+            responsive: true,
+            plugins: { legend: { display: false } }, 
+            scales: { y: { beginAtZero: true } } 
+          }
+        });
+
+        new Chart(document.getElementById('nifty-option-chart'), {
+          type: 'bar',
+          data: {
+            labels: reportData.niftyOptionData.labels,
+            datasets: [
+              { label: 'Calls OI', data: reportData.niftyOptionData.calls, backgroundColor: '#004b8d' },
+              { label: 'Puts OI', data: reportData.niftyOptionData.puts, backgroundColor: '#f6a821' }
+            ]
+          },
+          options: { 
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }, 
+            scales: { y: { beginAtZero: true } } 
+          }
+        });
+
+        new Chart(document.getElementById('banknifty-option-chart'), {
+          type: 'bar',
+          data: {
+            labels: reportData.bankNiftyOptionData.labels,
+            datasets: [
+              { label: 'Calls OI', data: reportData.bankNiftyOptionData.calls, backgroundColor: '#004b8d' },
+              { label: 'Puts OI', data: reportData.bankNiftyOptionData.puts, backgroundColor: '#f6a821' }
+            ]
+          },
+          options: { 
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }, 
+            scales: { y: { beginAtZero: true } } 
+          }
+        });
+
+        new Chart(document.getElementById('ls-chart'), {
+          type: 'bar',
+          data: {
+            labels: reportData.lsRatio.labels,
+            datasets: [{
+              label: 'L/S Ratio',
+              data: reportData.lsRatio.data,
+              backgroundColor: '#004b8d'
+            }]
+          },
+          options: { 
+            responsive: true,
+            plugins: { legend: { display: false } }, 
+            scales: { y: { beginAtZero: true } } 
+          }
+        });
+
+        new Chart(document.getElementById('long-chart'), {
+          type: 'bar',
+          data: {
+            labels: reportData.futureLong.labels,
+            datasets: [{
+              label: 'Long %',
+              data: reportData.futureLong.data,
+              backgroundColor: '#004b8d'
+            }]
+          },
+          options: { 
+            responsive: true,
+            plugins: { legend: { display: false } }, 
+            scales: { y: { beginAtZero: true } } 
+          }
+        });
+
+        new Chart(document.getElementById('short-chart'), {
+          type: 'bar',
+          data: {
+            labels: reportData.futureShort.labels,
+            datasets: [{
+              label: 'Short %',
+              data: reportData.futureShort.data,
+              backgroundColor: '#f6a821'
+            }]
+          },
+          options: { 
+            responsive: true,
+            plugins: { legend: { display: false } }, 
+            scales: { y: { beginAtZero: true } } 
+          }
+        });
+
+        console.log('Charts created successfully');
+      } catch (error) {
+        console.error('Error creating charts:', error);
+      }
+    }
+
+    /* ===== Simplified PDF Generation ===== */
+    async function generatePDF() {
+      console.log('Starting PDF generation...');
+      
+      // Show loading indicator
+      const loading = document.getElementById('loading');
+      loading.style.display = 'block';
+
+      try {
+        // Check if jsPDF is available
+        if (!window.jspdf) {
+          throw new Error('jsPDF library not loaded');
+        }
+
+        // Wait a bit for charts to fully render
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        const doc = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+
+        // Simple approach: capture each page section
+        const pages = [
+          'page-cover',
+          'page-market', 
+          'page-technical',
+          'page-option-chain',
+          'page-derivatives',
+          'page-news',
+          'page-calendar',
+          'page-disclaimer'
+        ];
+
+        for (let i = 0; i < pages.length; i++) {
+          const pageElement = document.getElementById(pages[i]);
+          if (!pageElement) {
+            console.warn(`Page element ${pages[i]} not found`);
+            continue;
+          }
+
+          console.log(`Capturing page ${i + 1}: ${pages[i]}`);
+
+          // Capture the page element
+          const canvas = await html2canvas(pageElement, {
+            scale: 1,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            allowTaint: true,
+            width: pageElement.offsetWidth,
+            height: pageElement.offsetHeight
+          });
+
+          const imgData = canvas.toDataURL('image/png');
+          const imgWidth = 210; // A4 width in mm
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+          if (i > 0) {
+            doc.addPage();
+          }
+
+          doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        }
+
+        // Save the PDF
+        const fileName = `morning-bell-report-${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        console.log('PDF generated successfully:', fileName);
+
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Error generating PDF: ' + error.message + '. Please check the console for details.');
+      } finally {
+        // Hide loading indicator
+        loading.style.display = 'none';
+      }
+    }
+
+    // Initialize everything when page loads
+    window.addEventListener('load', function() {
+      console.log('Page loaded, initializing...');
+      
+      // Check if all required libraries are loaded
+      if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        alert('Chart.js library failed to load. Please refresh the page.');
+        return;
+      }
+      
+      if (typeof html2canvas === 'undefined') {
+        console.error('html2canvas not loaded');
+        alert('html2canvas library failed to load. Please refresh the page.');
+        return;
+      }
+      
+      if (!window.jspdf) {
+        console.error('jsPDF not loaded');
+        alert('jsPDF library failed to load. Please refresh the page.');
+        return;
+      }
+
+      // Populate data and charts
+      populateTables();
+      
+      // Wait a bit before creating charts to ensure DOM is ready
+      setTimeout(() => {
+        populateCharts();
+        
+        // Add download button event listener
+        const downloadBtn = document.getElementById('download-pdf');
+        if (downloadBtn) {
+          downloadBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            console.log('Download button clicked');
+            await generatePDF();
+          });
+          console.log('Download button event listener added');
+        } else {
+          console.error('Download button not found');
+        }
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
